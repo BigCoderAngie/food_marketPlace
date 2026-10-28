@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Users')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <h1>Users</h1>
+    <div class="card table-wrap">
+        <table>
+            <tr><th>Name</th><th>Phone</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.name}"></td><td th:text="${u.phone}"></td><td th:text="${u.email}"></td>
+                <td th:text="${u.role}"></td><td th:text="${u.status}"></td>
+                <td class="small" th:text="${@fmt.dateTime(u.createdAt)}"></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

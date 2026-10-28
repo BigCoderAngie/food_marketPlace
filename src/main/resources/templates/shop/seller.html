@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(${seller.name})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="card">
+        <div class="seller-card">
+            <div class="avatar lg" th:text="${seller.initials}">MN</div>
+            <div>
+                <h1 style="margin:0" th:text="${seller.name}">Seller</h1>
+                <div class="muted" th:text="|${seller.type.label} · ${seller.suburb}, ${seller.town}|">Home cook · Katutura</div>
+                <div class="row small" style="margin-top:4px">
+                    <span class="badge green">Verified seller</span>
+                    <span class="badge blue" th:if="${seller.offersPickup}">Pickup</span>
+                    <span class="badge blue" th:if="${seller.offersDelivery}">Delivery</span>
+                    <span th:if="${seller.ratingAverage != null}"><span class="stars" th:text="${@fmt.stars(seller.ratingAverage)}">★★★★★</span> <span th:text="|${@fmt.rating(seller.ratingAverage)} (${seller.ratingCount} reviews)|"></span></span>
+                    <span class="muted" th:text="|${seller.completedOrders} completed orders|"></span>
+                </div>
+            </div>
+        </div>
+        <p style="margin-top:12px" th:text="${seller.description}"></p>
+        <p class="small" th:if="${seller.openingHours}"><strong>Hours:</strong> <span th:text="${seller.openingHours}"></span></p>
+        <div class="small" th:if="${seller.offersDelivery and !#lists.isEmpty(seller.deliveryZones)}">
+            <strong>Delivers to:</strong>
+            <span th:each="z, st : ${seller.deliveryZones}"><span th:text="|${z.suburb} (${@fmt.money(z.fee)})|"></span><span th:unless="${st.last}">, </span></span>
+        </div>
+        <div class="flash info" style="margin:12px 0 0" th:if="${seller.paused}">This seller is not taking orders right now.</div>
+    </div>
+
+    <th:block th:each="group : ${menu}">
+        <h2 th:text="${group.key}">Traditional</h2>
+        <div class="grid three">
+            <th:block th:each="f : ${group.value}"><a th:replace="~{fragments/layout :: foodCard(${f})}"></a></th:block>
+        </div>
+    </th:block>
+    <p class="muted" th:if="${#maps.isEmpty(menu)}">No menu items yet.</p>
+
+    <h2>Reviews</h2>
+    <div class="card" th:if="${#lists.isEmpty(reviews)}"><p class="muted">No reviews yet.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(reviews)}">
+        <ul class="list">
+            <li th:each="r : ${reviews}">
+                <span class="stars" th:text="${@fmt.stars(r.rating)}">★★★★★</span>
+                <strong th:text="${r.author.name}">Customer</strong> <span class="small muted" th:text="${@fmt.ago(r.createdAt)}"></span>
+                <p style="margin:4px 0 0" th:if="${r.comment}" th:text="${r.comment}"></p>
+            </li>
+        </ul>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Log in')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap" style="max-width:440px">
+    <h1>Log in</h1>
+    <div class="flash error" th:if="${param.error}">That phone/email and password don't match, or the account is suspended.</div>
+    <div class="flash info" th:if="${continuing}">Log in or create an account to continue.</div>
+    <form class="card" th:action="@{/login}" method="post">
+        <label for="username" style="margin-top:0">Phone number or email</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button class="btn block" type="submit" style="margin-top:16px">Log in</button>
+    </form>
+    <p>New here? <a th:href="@{/register(next=${continuingCheckout ? 'checkout' : null})}">Create a customer account</a>
+        or <a th:href="@{/register/seller}">register as a seller</a>.</p>
+    <details class="card small">
+        <summary>Demo accounts</summary>
+        <p style="margin-top:8px">Customer: <code>demo@eat.na</code> / <code>demo12345</code><br>
+            Seller: <code>meme@eat.na</code> / <code>seller1234</code> (also kapana@, bakery@, lunch@, fish@)<br>
+            Admin: <code>admin@eat.na</code> / <code>admin1234</code></p>
+    </details>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(${food.name})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+
+    <div class="flash warn" th:if="${conflictSeller != null}">
+        <p><strong>Your cart has food from <span th:text="${conflictSeller.name}"></span>.</strong>
+            An order can only come from one seller. Start a new cart with this item?</p>
+        <div class="row">
+            <form th:action="@{/cart/add}" method="post">
+                <input type="hidden" name="foodId" th:value="${food.id}">
+                <input type="hidden" name="replace" value="true">
+                <button class="btn" type="submit">Start a new cart</button>
+            </form>
+            <a class="btn secondary" th:href="@{/cart}">Keep my cart</a>
+        </div>
+    </div>
+
+    <div class="cols">
+        <div>
+            <div class="card" style="padding:0;overflow:hidden">
+                <div class="thumb" style="aspect-ratio:16/9;font-size:4rem">
+                    <img th:if="${food.photoPath}" th:src="${food.photoPath}" th:alt="${food.name}">
+                    <span th:unless="${food.photoPath}" th:text="${food.category != null and food.category.icon != null ? food.category.icon : '🍽️'}">🍲</span>
+                </div>
+                <div style="padding:16px">
+                    <h1 th:text="${food.name}">Oshifima</h1>
+                    <p class="price" style="font-size:1.25rem" th:text="${@fmt.money(food.price)}">N$ 55.00</p>
+                    <p th:text="${food.description}">Description</p>
+                    <div class="row small">
+                        <span class="badge" th:if="${food.category}" th:text="${food.category.name}">Traditional</span>
+                        <span class="badge brand" th:each="t : ${food.tagList}" th:text="${t}">halal</span>
+                    </div>
+                    <p class="small" style="margin-top:12px" th:if="${food.ingredients}"><strong>Ingredients:</strong> <span th:text="${food.ingredients}"></span></p>
+                    <p class="small" th:if="${food.allergens}"><strong>Allergens:</strong> <span th:text="${food.allergens}"></span></p>
+                </div>
+            </div>
+        </div>
+        <aside>
+            <div class="card" th:with="left=${food.portionsLeft(today)}">
+                <p><strong th:text="|Ready about ${food.prepMinutes} min after the seller accepts|">Ready in 15 min</strong></p>
+                <p th:if="${left != null and food.isOrderable(today)}" class="small"><span class="badge amber" th:text="|${left} portions left today|"></span></p>
+                <th:block th:if="${food.isOrderable(today) and seller.openForOrders}">
+                    <form th:action="@{/cart/add}" method="post">
+                        <input type="hidden" name="foodId" th:value="${food.id}">
+                        <label for="quantity">Quantity</label>
+                        <div class="row">
+                            <input class="qty" id="quantity" type="number" name="quantity" value="1" min="1" th:max="${left != null ? left : 50}">
+                            <button class="btn" type="submit">Add to cart</button>
+                        </div>
+                    </form>
+                </th:block>
+                <p th:if="${!food.isOrderable(today)}" class="flash error" style="margin:0">Sold out for today.</p>
+                <p th:if="${food.isOrderable(today) and !seller.openForOrders}" class="flash info" style="margin:0">This seller isn't taking orders right now.</p>
+            </div>
+            <div class="card">
+                <a class="seller-card" th:href="@{/s/{slug}(slug=${seller.slug})}">
+                    <div class="avatar" th:text="${seller.initials}">MN</div>
+                    <div>
+                        <strong th:text="${seller.name}">Seller</strong>
+                        <div class="small muted" th:text="|${seller.type.label} · ${seller.suburb}|"></div>
+                        <div class="small" th:if="${seller.ratingAverage != null}"><span class="stars">★</span> <span th:text="${@fmt.rating(seller.ratingAverage)}"></span> · <span th:text="|${seller.completedOrders} orders|"></span></div>
+                    </div>
+                </a>
+            </div>
+        </aside>
+    </div>
+
+    <th:block th:unless="${#lists.isEmpty(more)}">
+        <h2 th:text="|More from ${seller.name}|">More</h2>
+        <div class="grid four">
+            <th:block th:each="f : ${more}"><a th:replace="~{fragments/layout :: foodCard(${f})}"></a></th:block>
+        </div>
+    </th:block>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

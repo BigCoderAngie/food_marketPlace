@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Audit log')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <h1>Audit log</h1>
+    <p class="muted small">Price, availability, order, payment and seller changes (latest 100).</p>
+    <div class="card table-wrap">
+        <table>
+            <tr><th>When</th><th>Who</th><th>Action</th><th>What</th><th>Details</th></tr>
+            <tr th:each="l : ${logs}">
+                <td class="small nowrap" th:text="${@fmt.dateTime(l.at)}"></td>
+                <td class="small" th:text="${l.actor}"></td>
+                <td class="small" th:text="${l.action}"></td>
+                <td class="small" th:text="|${l.entityType} #${l.entityId}|"></td>
+                <td class="small" th:text="${l.details}"></td>
+            </tr>
+        </table>
+    </div>
+    <h2>Notification log</h2>
+    <p class="muted small">Every notification, by channel. WhatsApp shows LOGGED until a provider is connected.</p>
+    <div class="card table-wrap">
+        <table>
+            <tr><th>When</th><th>To</th><th>Channel</th><th>Status</th><th>Message</th></tr>
+            <tr th:each="n : ${notifications}">
+                <td class="small nowrap" th:text="${@fmt.dateTime(n.createdAt)}"></td>
+                <td class="small" th:text="${n.recipient.name}"></td>
+                <td class="small" th:text="${n.channel}"></td>
+                <td class="small" th:text="${n.deliveryStatus}"></td>
+                <td class="small" th:text="${n.message}"></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(${id == null ? 'Add food' : 'Edit food'})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap" style="max-width:640px">
+    <p class="small"><a th:href="@{/seller/menu}">← Menu</a></p>
+    <h1 th:text="${id == null} ? 'Add food' : 'Edit food'">Add food</h1>
+    <div class="flash error" th:if="${error}" th:text="${error}"></div>
+    <form class="card" th:action="${id == null} ? @{/seller/menu} : @{/seller/menu/{id}(id=${id})}" th:object="${form}" method="post" enctype="multipart/form-data">
+        <label for="name" style="margin-top:0">Name</label>
+        <input id="name" type="text" th:field="*{name}" required maxlength="120" placeholder="e.g. Oshifima with beef stew">
+        <div class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+
+        <div class="row fill">
+            <div>
+                <label for="price">Price (N$)</label>
+                <input id="price" type="number" step="0.50" min="1" th:field="*{price}" required>
+                <div class="field-error" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+            </div>
+            <div>
+                <label for="categoryId">Category</label>
+                <select id="categoryId" th:field="*{categoryId}">
+                    <option value="">None</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                </select>
+            </div>
+        </div>
+
+        <label for="description">Description</label>
+        <textarea id="description" th:field="*{description}" maxlength="1000"></textarea>
+
+        <div class="row fill">
+            <div>
+                <label for="prepMinutes">Prep time (minutes)</label>
+                <input id="prepMinutes" type="number" min="0" max="600" th:field="*{prepMinutes}">
+                <div class="hint">Time from accepting the order to food being ready. Used for pickup times.</div>
+                <div class="field-error" th:if="${#fields.hasErrors('prepMinutes')}" th:errors="*{prepMinutes}"></div>
+            </div>
+            <div>
+                <label for="dailyPortions">Portions per day</label>
+                <input id="dailyPortions" type="number" min="0" th:field="*{dailyPortions}" placeholder="No limit">
+                <div class="hint">Leave empty for no limit. Resets every morning.</div>
+            </div>
+        </div>
+
+        <label for="status">Availability</label>
+        <select id="status" th:field="*{status}">
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}"></option>
+        </select>
+
+        <label for="photo">Photo</label>
+        <img th:if="${photoPath}" th:src="${photoPath}" alt="" style="max-height:140px;border-radius:8px;margin-bottom:6px">
+        <input id="photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp">
+        <div class="hint">JPG, PNG or WebP under 5 MB.</div>
+
+        <details style="margin-top:12px">
+            <summary>Ingredients, allergens and tags</summary>
+            <label for="ingredients">Ingredients</label>
+            <input id="ingredients" type="text" th:field="*{ingredients}" maxlength="300">
+            <label for="allergens">Allergens</label>
+            <input id="allergens" type="text" th:field="*{allergens}" maxlength="200" placeholder="e.g. Gluten, dairy, nuts">
+            <label for="dietaryTags">Tags (comma separated)</label>
+            <input id="dietaryTags" type="text" th:field="*{dietaryTags}" maxlength="200" placeholder="e.g. vegetarian, halal, spicy">
+        </details>
+
+        <div class="row" style="margin-top:16px">
+            <button class="btn" type="submit">Save</button>
+            <a class="btn secondary" th:href="@{/seller/menu}">Cancel</a>
+        </div>
+    </form>
+    <form th:if="${id != null}" th:action="@{/seller/menu/{id}/delete(id=${id})}" method="post">
+        <button class="btn danger" type="submit" data-confirm="Remove this item from your menu?">Remove from menu</button>
+    </form>
+</main>
+</body>
+</html>

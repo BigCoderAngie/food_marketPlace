@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Checkout')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Checkout</h1>
+    <div class="flash error" th:unless="${isCustomer}">You're logged in as a seller or admin. Log in with a customer account to order.</div>
+    <div class="flash error" th:each="p : ${cart.problems()}" th:text="${p}"></div>
+
+    <form th:action="@{/checkout}" th:object="${form}" method="post">
+        <div class="cols">
+            <div>
+                <div class="card">
+                    <h3>1. Pickup or delivery</h3>
+                    <label class="radio-card" th:if="${cart.seller().offersPickup}">
+                        <input type="radio" name="fulfilment" value="PICKUP" th:checked="*{fulfilment.name() == 'PICKUP'}">
+                        <span><strong>Pickup</strong> from <span th:text="${cart.seller().name}"></span> in <span th:text="${cart.seller().suburb}"></span>
+                            <span class="small muted" style="display:block">Exact directions are shown once the seller accepts.</span></span>
+                    </label>
+                    <label class="radio-card" th:if="${cart.seller().offersDelivery}">
+                        <input type="radio" name="fulfilment" value="DELIVERY" th:checked="*{fulfilment.name() == 'DELIVERY'}">
+                        <span><strong>Delivery</strong> by the seller
+                            <span class="small muted" style="display:block">Flat fee per suburb.</span></span>
+                    </label>
+
+                    <div data-for="PICKUP">
+                        <label for="pickupTime">Pickup time</label>
+                        <select id="pickupTime" name="pickupTime">
+                            <option th:each="s : ${slots}" th:value="${s}" th:text="${@fmt.dateTime(s)}" th:selected="${s == form.pickupTime}">Today 12:30</option>
+                        </select>
+                        <div class="hint" th:text="|The earliest time allows for about ${cart.maxPrepMinutes()} minutes of preparation.|"></div>
+                    </div>
+
+                    <div data-for="DELIVERY" th:if="${cart.seller().offersDelivery}">
+                        <label for="deliverySuburb">Suburb</label>
+                        <select id="deliverySuburb" name="deliverySuburb">
+                            <option value="">Choose your suburb</option>
+                            <option th:each="z : ${cart.seller().deliveryZones}" th:value="${z.suburb}" th:selected="${z.suburb == form.deliverySuburb}"
+                                    th:text="|${z.suburb} (${@fmt.money(z.fee)})|">Katutura</option>
+                        </select>
+                        <div class="hint">Not listed? This seller doesn't deliver there yet. Choose pickup.</div>
+                        <label for="deliveryLandmark">Where should they bring it?</label>
+                        <textarea id="deliveryLandmark" name="deliveryLandmark" th:text="*{deliveryLandmark}"
+                                  placeholder="e.g. House 12, blue gate opposite Wanaheda clinic. Ask for Selma."></textarea>
+                        <div class="hint">No street number? Describe a landmark the driver can find.</div>
+                    </div>
+
+                    <label for="contactPhone">Your phone number</label>
+                    <input id="contactPhone" type="tel" name="contactPhone" th:value="*{contactPhone}" placeholder="081 234 5678" required>
+                    <div class="hint">The seller calls this number if they can't find you.</div>
+                </div>
+
+                <div class="card">
+                    <h3>2. Payment</h3>
+                    <label class="radio-card" th:each="m : ${paymentMethods}">
+                        <input type="radio" name="paymentMethod" th:value="${m}" th:checked="${m == form.paymentMethod}">
+                        <span><strong th:text="${m.label}">Cash</strong>
+                            <span class="small muted" style="display:block" th:if="${m.name() == 'CASH'}">Pay the seller when you get your food.</span>
+                            <span class="small muted" style="display:block" th:if="${m.transfer}">Send the money after the seller accepts. Your order shows as paid once the seller confirms it arrived.</span>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="card">
+                    <label for="note" style="margin-top:0">Note for the seller (optional)</label>
+                    <textarea id="note" name="note" th:text="*{note}" placeholder="e.g. Extra chilli, no onions"></textarea>
+                </div>
+            </div>
+
+            <aside class="card">
+                <h3>Your order</h3>
+                <p class="small muted" th:text="${cart.seller().name}"></p>
+                <table>
+                    <tr th:each="l : ${cart.lines()}">
+                        <td th:text="|${l.quantity()} × ${l.food().name}|"></td>
+                        <td class="right nowrap" th:text="${@fmt.money(l.lineTotal())}"></td>
+                    </tr>
+                </table>
+                <table class="totals">
+                    <tr><td>Subtotal</td><td class="right" th:text="${@fmt.money(cart.subtotal())}"></td></tr>
+                    <tr id="delivery-fee" class="hidden"><td colspan="2" class="small muted">Plus the delivery fee for your suburb (shown next to each suburb).</td></tr>
+                </table>
+                <p class="small" th:text="|The seller has ${cart.seller().acceptWindowMinutes} minutes to accept. If they don't, the order is cancelled automatically and you pay nothing.|"></p>
+                <button class="btn block" type="submit" th:disabled="${!isCustomer or !cart.ok}">Place order</button>
+            </aside>
+        </div>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

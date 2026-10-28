@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Reviews')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Reviews</h1>
+    <div class="card" th:if="${#lists.isEmpty(reviews)}"><p class="muted" style="margin:0">No reviews yet.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(reviews)}">
+        <ul class="list">
+            <li th:each="r : ${reviews}" class="row" style="justify-content:space-between">
+                <div>
+                    <span class="stars" th:text="${@fmt.stars(r.rating)}"></span> <strong th:text="${r.seller.name}"></strong>
+                    <span class="small muted" th:text="|by ${r.author.name} · ${@fmt.ago(r.createdAt)}|"></span>
+                    <span class="badge red" th:if="${r.hidden}">Hidden</span>
+                    <p style="margin:4px 0 0" th:text="${r.comment}"></p>
+                </div>
+                <form th:action="@{/admin/reviews/{id}(id=${r.id})}" method="post">
+                    <input type="hidden" name="hidden" th:value="${!r.hidden}">
+                    <button class="btn small" th:classappend="${r.hidden} ? 'secondary' : 'danger'" type="submit" th:text="${r.hidden} ? 'Show' : 'Hide'"></button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

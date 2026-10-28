@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Orders')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <h1>Latest orders</h1>
+    <div class="card table-wrap">
+        <table>
+            <tr><th>Order</th><th>Seller</th><th>Customer</th><th>Total</th><th>Status</th><th>Payment</th></tr>
+            <tr th:each="o : ${orders}">
+                <td><a th:href="@{/admin/orders/{c}(c=${o.code})}" th:text="${o.code}"></a><div class="small muted" th:text="${@fmt.dateTime(o.placedAt)}"></div></td>
+                <td th:text="${o.seller.name}"></td>
+                <td th:text="${o.customer.name}"></td>
+                <td class="nowrap" th:text="${@fmt.money(o.total)}"></td>
+                <td><span th:replace="~{fragments/layout :: statusBadge(${o.status})}"></span></td>
+                <td><span th:replace="~{fragments/layout :: payBadge(${o.payment})}"></span></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Find food')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Find food</h1>
+    <form class="card" th:action="@{/search}" method="get">
+        <div class="row fill">
+            <div><label for="q">Search</label><input id="q" type="search" name="q" th:value="${q}" placeholder="Food, seller or tag"></div>
+            <div><label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All</option>
+                    <option th:each="c : ${categories}" th:value="${c.slug}" th:text="${c.name}" th:selected="${c.slug == category}"></option>
+                </select></div>
+            <div><label for="suburb">Suburb</label>
+                <select id="suburb" name="suburb">
+                    <option value="">Any</option>
+                    <option th:each="s : ${suburbs}" th:value="${s}" th:text="${s}" th:selected="${s == suburb}"></option>
+                </select></div>
+        </div>
+        <div class="row fill">
+            <div><label for="type">Seller type</label>
+                <select id="type" name="type">
+                    <option value="">Any</option>
+                    <option th:each="t : ${sellerTypes}" th:value="${t}" th:text="${t.label}" th:selected="${t == type}"></option>
+                </select></div>
+            <div><label for="fulfilment">Pickup or delivery</label>
+                <select id="fulfilment" name="fulfilment">
+                    <option value="">Either</option>
+                    <option value="PICKUP" th:selected="${fulfilment != null and fulfilment.name() == 'PICKUP'}">Pickup</option>
+                    <option value="DELIVERY" th:selected="${fulfilment != null and fulfilment.name() == 'DELIVERY'}">Delivery</option>
+                </select></div>
+            <div><label for="maxPrice">Max price (N$)</label><input id="maxPrice" type="number" min="0" step="1" name="maxPrice" th:value="${maxPrice}"></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+            <label class="inline"><input type="checkbox" name="availableNow" value="true" th:checked="${availableNow}"> Available now only</label>
+            <button class="btn" type="submit">Show results</button>
+            <a class="btn secondary" th:href="@{/search}">Clear</a>
+        </div>
+    </form>
+    <p class="muted" th:text="|${#lists.size(results)} result${#lists.size(results) == 1 ? '' : 's'}|">3 results</p>
+    <div class="grid three">
+        <th:block th:each="f : ${results}"><a th:replace="~{fragments/layout :: foodCard(${f})}"></a></th:block>
+    </div>
+    <div class="card" th:if="${#lists.isEmpty(results)}">
+        <p>Nothing matches yet. Try another suburb or remove a filter.</p>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Notifications')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap" style="max-width:720px">
+    <h1>Notifications</h1>
+    <div class="card" th:if="${#lists.isEmpty(items)}"><p class="muted">Nothing yet.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(items)}">
+        <ul class="list">
+            <li th:each="n : ${items}">
+                <span class="badge brand" th:unless="${n.readByUser}">New</span>
+                <a th:if="${n.link}" th:href="${n.link}" th:text="${n.message}"></a>
+                <span th:unless="${n.link}" th:text="${n.message}"></span>
+                <div class="small muted" th:text="${@fmt.ago(n.createdAt)}"></div>
+            </li>
+        </ul>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

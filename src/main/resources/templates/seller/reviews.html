@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Reviews')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap" style="max-width:720px">
+    <h1>Reviews</h1>
+    <p th:if="${seller.ratingAverage != null}"><span class="stars" th:text="${@fmt.stars(seller.ratingAverage)}"></span>
+        <strong th:text="${@fmt.rating(seller.ratingAverage)}"></strong> from <span th:text="${seller.ratingCount}"></span> reviews ·
+        <span th:text="${seller.completedOrders}"></span> completed orders</p>
+    <div class="card" th:if="${#lists.isEmpty(reviews)}"><p class="muted" style="margin:0">No reviews yet. Customers can review once an order is completed.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(reviews)}">
+        <ul class="list">
+            <li th:each="r : ${reviews}">
+                <span class="stars" th:text="${@fmt.stars(r.rating)}"></span> <strong th:text="${r.author.name}"></strong>
+                <span class="small muted" th:text="|${@fmt.ago(r.createdAt)} · order ${r.order.code}|"></span>
+                <span class="badge red" th:if="${r.hidden}">Hidden by admin</span>
+                <p style="margin:4px 0 0" th:if="${r.comment}" th:text="${r.comment}"></p>
+            </li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

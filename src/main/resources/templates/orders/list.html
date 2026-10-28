@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('My orders')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>My orders</h1>
+    <div class="card" th:if="${#lists.isEmpty(active) and #lists.isEmpty(past)}">
+        <p>You haven't ordered yet.</p><a class="btn" th:href="@{/search}">Find food</a>
+    </div>
+    <th:block th:unless="${#lists.isEmpty(active)}">
+        <h2>Active</h2>
+        <div class="card"><ul class="list">
+            <li th:each="o : ${active}"><a class="order-row" th:href="@{/orders/{c}(c=${o.code})}">
+                <div><strong th:text="${o.seller.name}">Seller</strong>
+                    <div class="small muted" th:text="|${o.code} · ${@fmt.dateTime(o.placedAt)} · ${o.itemCount} item(s)|"></div></div>
+                <div class="right"><span th:replace="~{fragments/layout :: statusBadge(${o.status})}"></span>
+                    <div class="small" th:text="${@fmt.money(o.total)}"></div></div>
+            </a></li>
+        </ul></div>
+    </th:block>
+    <th:block th:unless="${#lists.isEmpty(past)}">
+        <h2>Previous</h2>
+        <div class="card"><ul class="list">
+            <li th:each="o : ${past}"><a class="order-row" th:href="@{/orders/{c}(c=${o.code})}">
+                <div><strong th:text="${o.seller.name}">Seller</strong>
+                    <div class="small muted" th:text="|${o.code} · ${@fmt.dateTime(o.placedAt)}|"></div></div>
+                <div class="right"><span th:replace="~{fragments/layout :: statusBadge(${o.status})}"></span>
+                    <div class="small" th:text="${@fmt.money(o.total)}"></div></div>
+            </a></li>
+        </ul></div>
+    </th:block>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

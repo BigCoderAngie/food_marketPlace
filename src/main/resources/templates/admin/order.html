@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(|Order ${order.code}|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <p class="small"><a th:href="@{/admin/orders}">← Orders</a></p>
+    <h1 th:text="|Order ${order.code}|"></h1>
+    <p><span th:replace="~{fragments/layout :: statusBadge(${order.status})}"></span> <span th:replace="~{fragments/layout :: payBadge(${order.payment})}"></span></p>
+    <p class="muted" th:text="|${order.seller.name} → ${order.customer.name} (${order.contactPhone}) · ${order.fulfilment.label}|"></p>
+    <div class="card" th:if="${order.status.name() == 'DELIVERY_PROBLEM'}">
+        <h3>Resolve delivery problem</h3>
+        <p th:text="${order.reason}"></p>
+        <form th:action="@{/admin/orders/{c}/resolve(c=${order.code})}" method="post">
+            <label for="outcome">Outcome</label>
+            <select id="outcome" name="outcome">
+                <option value="DELIVERED">Delivered after all</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+            </select>
+            <label for="note">Note</label>
+            <input id="note" name="note" type="text" required>
+            <button class="btn" type="submit" style="margin-top:8px">Resolve</button>
+        </form>
+    </div>
+    <th:block th:replace="~{fragments/layout :: orderBody(${order})}"></th:block>
+</main>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Sellers')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Sellers</h1>
+    <div class="card" th:each="s : ${sellers}">
+        <div class="row" style="justify-content:space-between">
+            <div>
+                <strong th:text="${s.name}"></strong>
+                <span class="badge" th:classappend="${s.status.name() == 'VERIFIED'} ? 'green' : (${s.status.name() == 'PENDING_REVIEW'} ? 'amber' : 'red')" th:text="${s.status.label}"></span>
+                <span class="badge blue" th:if="${s.paused}">Paused</span>
+                <div class="small muted" th:text="|${s.type.label} · ${s.suburb}, ${s.town} · owner ${s.owner.name} (${s.owner.contact})|"></div>
+                <div class="small muted" th:text="|Joined ${@fmt.dateTime(s.createdAt)} · ${s.completedOrders} completed orders|"></div>
+                <div class="small" th:if="${s.statusNote}" th:text="|Note: ${s.statusNote}|"></div>
+            </div>
+            <a class="small" th:if="${s.status.name() == 'VERIFIED'}" th:href="@{/s/{slug}(slug=${s.slug})}">Public page</a>
+        </div>
+        <div class="row" style="margin-top:10px">
+            <form th:if="${s.status.name() == 'PENDING_REVIEW' or s.status.name() == 'REJECTED'}" th:action="@{/admin/sellers/{id}/verify(id=${s.id})}" method="post">
+                <button class="btn green small" type="submit">Verify</button></form>
+            <form th:if="${s.status.name() == 'SUSPENDED'}" th:action="@{/admin/sellers/{id}/reinstate(id=${s.id})}" method="post">
+                <button class="btn small" type="submit">Reinstate</button></form>
+            <details th:if="${s.status.name() == 'PENDING_REVIEW'}"><summary class="small">Reject</summary>
+                <form th:action="@{/admin/sellers/{id}/reject(id=${s.id})}" method="post" class="row">
+                    <input name="reason" type="text" required placeholder="Reason sent to the seller"><button class="btn danger small" type="submit">Reject</button></form>
+            </details>
+            <details th:if="${s.status.name() == 'VERIFIED'}"><summary class="small">Suspend</summary>
+                <form th:action="@{/admin/sellers/{id}/suspend(id=${s.id})}" method="post" class="row">
+                    <input name="reason" type="text" required placeholder="Reason"><button class="btn danger small" type="submit">Suspend</button></form>
+            </details>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Profile & delivery')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap" style="max-width:720px">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Profile &amp; delivery</h1>
+    <form class="card" th:action="@{/seller/profile}" th:object="${form}" method="post">
+        <h3>Public profile</h3>
+        <label for="name">Business name</label>
+        <input id="name" type="text" th:field="*{name}" required maxlength="120">
+        <label for="type">Seller type</label>
+        <select id="type" th:field="*{type}">
+            <option th:each="t : ${sellerTypes}" th:value="${t}" th:text="${t.label}"></option>
+        </select>
+        <label for="description">About your food</label>
+        <textarea id="description" th:field="*{description}" maxlength="1000"></textarea>
+        <label for="openingHours">Opening hours</label>
+        <input id="openingHours" type="text" th:field="*{openingHours}" maxlength="200" placeholder="e.g. Mon–Sat 10:00–19:00">
+        <div class="row fill">
+            <div><label for="phone">Phone</label><input id="phone" type="tel" th:field="*{phone}"></div>
+            <div><label for="whatsapp">WhatsApp for order alerts</label><input id="whatsapp" type="tel" th:field="*{whatsapp}"></div>
+        </div>
+        <div class="row fill">
+            <div><label for="town">Town</label><input id="town" type="text" th:field="*{town}"></div>
+            <div><label for="suburb">Suburb</label><input id="suburb" type="text" th:field="*{suburb}" required></div>
+        </div>
+
+        <h3 style="margin-top:20px">Orders</h3>
+        <label class="inline"><input type="checkbox" th:field="*{offersPickup}"> Customers can pick up</label>
+        <label class="inline"><input type="checkbox" th:field="*{offersDelivery}"> I deliver (set suburbs below)</label>
+        <label for="pickupInstructions">Pickup directions (shown after you accept)</label>
+        <textarea id="pickupInstructions" th:field="*{pickupInstructions}" maxlength="300" placeholder="e.g. Green gate next to the car wash on Eveline St."></textarea>
+        <label for="acceptWindowMinutes">Minutes you have to accept an order</label>
+        <input id="acceptWindowMinutes" type="number" min="3" max="60" th:field="*{acceptWindowMinutes}">
+        <div class="hint">After this the order expires and the customer is shown other sellers.</div>
+        <label for="paymentInstructions">How customers pay you by eWallet/EFT</label>
+        <textarea id="paymentInstructions" th:field="*{paymentInstructions}" maxlength="300" placeholder="e.g. Blue Wallet to 081 234 5678, reference = order number"></textarea>
+        <button class="btn" type="submit" style="margin-top:16px">Save profile</button>
+    </form>
+
+    <div class="card" id="delivery">
+        <h3>Delivery suburbs and fees</h3>
+        <p class="small muted">Customers choose their suburb at checkout and pay this flat fee. Only listed suburbs can order delivery.</p>
+        <ul class="list" th:unless="${#lists.isEmpty(seller.deliveryZones)}">
+            <li th:each="z : ${seller.deliveryZones}" class="row" style="justify-content:space-between">
+                <span><strong th:text="${z.suburb}"></strong> · <span th:text="${@fmt.money(z.fee)}"></span></span>
+                <form th:action="@{/seller/profile/zones/{id}/delete(id=${z.id})}" method="post"><button class="btn danger small" type="submit">Remove</button></form>
+            </li>
+        </ul>
+        <form class="row fill" th:action="@{/seller/profile/zones}" method="post" style="margin-top:8px;align-items:flex-end">
+            <div><label for="zsuburb">Suburb</label><input id="zsuburb" name="suburb" type="text" required placeholder="e.g. Wanaheda"></div>
+            <div><label for="zfee">Fee (N$)</label><input id="zfee" name="fee" type="number" min="0" step="1" required></div>
+            <div style="flex:0 0 auto"><button class="btn secondary" type="submit">Add suburb</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

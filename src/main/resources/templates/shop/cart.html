@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Your cart')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Your cart</h1>
+    <div class="card" th:if="${cart.empty}">
+        <p>Your cart is empty.</p>
+        <a class="btn" th:href="@{/search}">Find food</a>
+    </div>
+    <div class="cols" th:unless="${cart.empty}">
+        <div class="card">
+            <p class="muted">From <a th:href="@{/s/{slug}(slug=${cart.seller().slug})}" th:text="${cart.seller().name}">Seller</a></p>
+            <ul class="list">
+                <li th:each="l : ${cart.lines()}">
+                    <div class="row" style="justify-content:space-between">
+                        <div>
+                            <strong th:text="${l.food().name}">Item</strong>
+                            <div class="small muted" th:text="|${@fmt.money(l.food().price)} each|"></div>
+                            <div class="small field-error" th:unless="${l.orderable()}">Not available in this quantity</div>
+                        </div>
+                        <div class="row">
+                            <form th:action="@{/cart/update}" method="post" class="row">
+                                <input type="hidden" name="foodId" th:value="${l.food().id}">
+                                <input class="qty" type="number" name="quantity" min="0" max="50" th:value="${l.quantity()}" aria-label="Quantity">
+                                <button class="btn secondary small" type="submit">Update</button>
+                            </form>
+                            <form th:action="@{/cart/update}" method="post">
+                                <input type="hidden" name="foodId" th:value="${l.food().id}">
+                                <input type="hidden" name="quantity" value="0">
+                                <button class="btn danger small" type="submit">Remove</button>
+                            </form>
+                            <strong class="nowrap" th:text="${@fmt.money(l.lineTotal())}">N$ 0</strong>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <aside class="card">
+            <div class="flash error" th:each="p : ${cart.problems()}" th:text="${p}"></div>
+            <table class="totals">
+                <tr class="total"><td>Subtotal</td><td class="right" th:text="${@fmt.money(cart.subtotal())}"></td></tr>
+            </table>
+            <p class="small muted">Delivery fee, if any, is added at checkout.</p>
+            <a class="btn block" th:href="@{/checkout}" th:if="${cart.ok}">Go to checkout</a>
+            <button class="btn block" disabled th:unless="${cart.ok}">Fix the items above to continue</button>
+            <form th:action="@{/cart/clear}" method="post" style="margin-top:8px">
+                <button class="btn secondary block" type="submit">Empty cart</button>
+            </form>
+        </aside>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

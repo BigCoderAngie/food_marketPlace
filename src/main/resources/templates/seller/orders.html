@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Orders')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap">
+    <h1>Orders</h1>
+    <div class="chips" style="margin-bottom:12px">
+        <a class="chip" th:classappend="${tab == 'active'} ? 'active'" th:href="@{/seller/orders(tab='active')}">Active</a>
+        <a class="chip" th:classappend="${tab != 'active'} ? 'active'" th:href="@{/seller/orders(tab='closed')}">Completed &amp; closed</a>
+    </div>
+    <div class="card" th:if="${#lists.isEmpty(orders)}"><p class="muted" style="margin:0">No orders here.</p></div>
+    <div class="card table-wrap" th:unless="${#lists.isEmpty(orders)}">
+        <table>
+            <tr><th>Order</th><th>Customer</th><th>For</th><th>Total</th><th>Status</th><th>Payment</th></tr>
+            <tr th:each="o : ${orders}">
+                <td><a th:href="@{/seller/orders/{c}(c=${o.code})}" th:text="${o.code}"></a><div class="small muted" th:text="${@fmt.dateTime(o.placedAt)}"></div></td>
+                <td th:text="${o.customer.name}"></td>
+                <td class="small" th:text="${o.fulfilment.name() == 'PICKUP'} ? |Pickup ${@fmt.dateTime(o.pickupTime)}| : |Delivery, ${o.deliverySuburb}|"></td>
+                <td class="nowrap" th:text="${@fmt.money(o.total)}"></td>
+                <td><span th:replace="~{fragments/layout :: statusBadge(${o.status})}"></span></td>
+                <td><span th:replace="~{fragments/layout :: payBadge(${o.payment})}"></span></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

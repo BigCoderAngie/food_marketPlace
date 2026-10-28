@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Menu')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <th:block th:replace="~{fragments/layout :: sellerBanner(${seller})}"></th:block>
+    <div class="row" style="justify-content:space-between">
+        <h1 style="margin:0">Menu &amp; today's portions</h1>
+        <a class="btn" th:href="@{/seller/menu/new}">Add food</a>
+    </div>
+    <p class="muted small">Set how many portions you have today. When they run out the item shows "Sold out" and no more orders come in. Counts reset every morning.</p>
+
+    <div class="card" th:if="${#lists.isEmpty(items)}"><p style="margin:0">No food yet. <a th:href="@{/seller/menu/new}">Add your first item</a>.</p></div>
+    <div class="card" th:each="f : ${items}" th:with="left=${f.portionsLeft(today)}">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+            <div>
+                <strong th:text="${f.name}">Item</strong>
+                <span class="badge" th:classappend="${f.status.name() == 'AVAILABLE'} ? 'green' : (${f.status.name() == 'SOLD_OUT'} ? 'red' : '')" th:text="${f.status.label}"></span>
+                <div class="small muted" th:text="|${@fmt.money(f.price)} · ${f.category != null ? f.category.name : 'No category'} · ${f.prepMinutes} min prep|"></div>
+                <div class="small" th:if="${f.dailyPortions != null}" th:text="|Today: ${left} of ${f.dailyPortions} portions left|"></div>
+                <div class="small muted" th:if="${f.dailyPortions == null}">No daily limit</div>
+            </div>
+            <a class="btn secondary small" th:href="@{/seller/menu/{id}/edit(id=${f.id})}">Edit</a>
+        </div>
+        <div class="row" style="margin-top:10px">
+            <form class="row" th:action="@{/seller/menu/{id}/portions(id=${f.id})}" method="post">
+                <input class="qty" type="number" name="portions" min="0" th:value="${left}" placeholder="∞" th:aria-label="|Portions of ${f.name} today|">
+                <button class="btn secondary small" type="submit">Set today's portions</button>
+            </form>
+            <form th:if="${f.status.name() != 'SOLD_OUT'}" th:action="@{/seller/menu/{id}/status(id=${f.id})}" method="post">
+                <input type="hidden" name="status" value="SOLD_OUT"><button class="btn secondary small" type="submit">Mark sold out</button>
+            </form>
+            <form th:if="${f.status.name() != 'AVAILABLE'}" th:action="@{/seller/menu/{id}/status(id=${f.id})}" method="post">
+                <input type="hidden" name="status" value="AVAILABLE"><button class="btn secondary small" type="submit">Make available</button>
+            </form>
+            <form th:if="${f.status.name() != 'UNAVAILABLE'}" th:action="@{/seller/menu/{id}/status(id=${f.id})}" method="post">
+                <input type="hidden" name="status" value="UNAVAILABLE"><button class="btn secondary small" type="submit">Hide</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

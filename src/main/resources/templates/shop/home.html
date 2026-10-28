@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Food from Windhoek kitchens')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="flash ok" th:if="${param.welcome}">Welcome to Eat.na! Your account is ready.</div>
+    <div class="flash info" th:if="${param.loggedOut}">You're logged out.</div>
+
+    <section class="hero">
+        <h1>Order from Windhoek's home cooks, stalls and kitchens</h1>
+        <p>Oshifima, kapana, vetkoek, fresh bread and office lunches. Pick it up on your way or get it delivered to your suburb.</p>
+        <form class="searchbar" th:action="@{/search}" method="get">
+            <input type="search" name="q" placeholder="What do you feel like eating?" aria-label="Search food">
+            <select name="suburb" aria-label="Suburb">
+                <option value="">Any suburb</option>
+                <option th:each="s : ${suburbs}" th:value="${s}" th:text="${s}">Katutura</option>
+            </select>
+            <button class="btn" type="submit">Search</button>
+        </form>
+    </section>
+
+    <div class="chips" aria-label="Categories">
+        <a class="chip" th:each="c : ${categories}" th:href="@{/search(category=${c.slug})}"
+           th:text="|${c.icon != null ? c.icon : ''} ${c.name}|">🍲 Traditional</a>
+    </div>
+
+    <h2>Available now</h2>
+    <p class="muted" th:if="${#lists.isEmpty(foods)}">No food is available right now. Check back soon.</p>
+    <div class="grid three">
+        <th:block th:each="f : ${foods}"><a th:replace="~{fragments/layout :: foodCard(${f})}"></a></th:block>
+    </div>
+
+    <h2>Sellers <a class="small" th:href="@{/sellers}">See all</a></h2>
+    <div class="grid three">
+        <div class="card" th:each="s : ${sellers}">
+            <a class="seller-card" th:href="@{/s/{slug}(slug=${s.slug})}">
+                <div class="avatar" th:text="${s.initials}">MN</div>
+                <div>
+                    <strong th:text="${s.name}">Seller</strong>
+                    <div class="small muted"><span th:text="${s.type.label}"></span> · <span th:text="${s.suburb}"></span></div>
+                    <div class="small" th:if="${s.ratingAverage != null}"><span class="stars">★</span> <span th:text="${@fmt.rating(s.ratingAverage)}"></span> <span class="muted" th:text="|(${s.ratingCount})|"></span></div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+        <h3>Cook or sell food?</h3>
+        <p>List your menu for free, set today's portions, and get orders on your phone. We verify every seller before they go live.</p>
+        <a class="btn" th:href="@{/register/seller}">Start selling</a>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

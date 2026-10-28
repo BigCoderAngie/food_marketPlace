@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('My shop')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap" data-autorefresh="30">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="flash ok" th:if="${param.welcome}">Your shop is created. Next: add your menu and delivery suburbs.</div>
+    <th:block th:replace="~{fragments/layout :: sellerBanner(${seller})}"></th:block>
+
+    <div class="row" style="justify-content:space-between">
+        <div>
+            <h1 style="margin:0" th:text="${seller.name}">Shop</h1>
+            <p class="muted small"><span th:text="${seller.status.label}"></span>
+                <th:block th:if="${seller.status.name() == 'VERIFIED'}"> · <a th:href="@{/s/{slug}(slug=${seller.slug})}">View my public page</a></th:block></p>
+        </div>
+        <form th:unless="${seller.paused}" th:action="@{/seller/profile/pause}" method="post">
+            <input type="hidden" name="paused" value="true">
+            <button class="btn secondary small" type="submit" data-confirm="Pause your storefront? Customers won't be able to order until you resume.">Pause orders</button>
+        </form>
+    </div>
+
+    <div class="grid four" style="margin:12px 0 4px">
+        <div class="stat"><div class="n" th:text="${#lists.size(incoming)}">0</div><div class="l">Waiting for you</div></div>
+        <div class="stat"><div class="n" th:text="${#lists.size(inProgress)}">0</div><div class="l">In progress</div></div>
+        <div class="stat"><div class="n" th:text="${report.todayOrders()}">0</div><div class="l">Orders today</div></div>
+        <div class="stat"><div class="n" th:text="${@fmt.money(report.todaySales())}">N$ 0</div><div class="l">Today's sales</div></div>
+    </div>
+
+    <div class="flash info" th:if="${menuCount == 0}">You have no food on your menu yet. <a th:href="@{/seller/menu/new}">Add your first item</a>.</div>
+    <div class="flash warn" th:unless="${#lists.isEmpty(lowStock)}">
+        Running low: <th:block th:each="f, st : ${lowStock}"><strong th:text="${f.name}"></strong> (<span th:text="${f.portionsLeft(today)}"></span> left)<span th:unless="${st.last}">, </span></th:block>.
+        <a th:href="@{/seller/menu}">Update portions</a>
+    </div>
+
+    <h2>New orders</h2>
+    <div class="card" th:if="${#lists.isEmpty(incoming)}"><p class="muted" style="margin:0">No new orders right now. This page refreshes itself.</p></div>
+    <div class="card" th:each="o : ${incoming}" style="border-color:#f5c48c">
+        <div class="row" style="justify-content:space-between">
+            <div>
+                <strong th:text="|${o.code} · ${o.customer.name}|"></strong>
+                <div class="small" th:text="|${o.itemCount} item(s) · ${@fmt.money(o.total)} · ${o.fulfilment.label}${o.fulfilment.name() == 'PICKUP' ? ' at ' + @fmt.dateTime(o.pickupTime) : ' to ' + o.deliverySuburb}|"></div>
+                <div class="small muted"><th:block th:each="i, st : ${o.items}"><span th:text="|${i.quantity}× ${i.name}|"></span><span th:unless="${st.last}">, </span></th:block></div>
+            </div>
+            <div class="right">
+                <div class="small muted">Accept within</div>
+                <span class="countdown" th:data-deadline="${o.acceptBy.toEpochMilli()}">10:00</span>
+            </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+            <form th:action="@{/seller/orders/{c}/action(c=${o.code})}" method="post">
+                <input type="hidden" name="do" value="accept"><button class="btn green" type="submit">Accept</button>
+            </form>
+            <a class="btn secondary" th:href="@{/seller/orders/{c}(c=${o.code})}">Details / reject</a>
+        </div>
+    </div>
+
+    <h2>In progress</h2>
+    <div class="card" th:if="${#lists.isEmpty(inProgress)}"><p class="muted" style="margin:0">Nothing in progress.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(inProgress)}">
+        <ul class="list">
+            <li th:each="o : ${inProgress}"><a class="order-row" th:href="@{/seller/orders/{c}(c=${o.code})}">
+                <div><strong th:text="|${o.code} · ${o.customer.name}|"></strong>
+                    <div class="small muted" th:text="|${o.fulfilment.label}${o.fulfilment.name() == 'PICKUP' ? ' at ' + @fmt.dateTime(o.pickupTime) : ' to ' + o.deliverySuburb} · ${@fmt.money(o.total)}|"></div></div>
+                <div class="right"><span th:replace="~{fragments/layout :: statusBadge(${o.status})}"></span><br>
+                    <span th:replace="~{fragments/layout :: payBadge(${o.payment})}"></span></div>
+            </a></li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

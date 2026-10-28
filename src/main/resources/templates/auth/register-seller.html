@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Sell on Eat.na')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap" style="max-width:560px">
+    <h1>Sell your food on Eat.na</h1>
+    <p class="muted">Free to join. Set up your menu straight away; your shop goes live after we verify you.</p>
+    <div class="flash error" th:if="${error}" th:text="${error}"></div>
+    <form class="card" th:action="@{/register/seller}" method="post">
+        <h3>Your business</h3>
+        <label for="businessName">Business or kitchen name</label>
+        <input id="businessName" name="businessName" type="text" th:value="${businessName}" required placeholder="e.g. Meme Selma's Kitchen">
+        <label for="type">What kind of seller are you?</label>
+        <select id="type" name="type">
+            <option th:each="t : ${sellerTypes}" th:value="${t}" th:text="${t.label}" th:selected="${t == type}"></option>
+        </select>
+        <label for="suburb">Suburb you cook or sell from</label>
+        <input id="suburb" name="suburb" type="text" th:value="${suburb}" required placeholder="e.g. Katutura">
+        <label for="description">Tell customers about your food (optional)</label>
+        <textarea id="description" name="description" th:text="${description}"></textarea>
+
+        <h3 style="margin-top:20px">Your login</h3>
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" th:value="${name}" required>
+        <label for="phone">Phone / WhatsApp number</label>
+        <input id="phone" name="phone" type="tel" th:value="${phone}" placeholder="081 234 5678">
+        <div class="hint">New order alerts go to this number once WhatsApp alerts are switched on.</div>
+        <label for="email">Email (optional)</label>
+        <input id="email" name="email" type="email" th:value="${email}">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" minlength="8" required autocomplete="new-password">
+        <button class="btn block" type="submit" style="margin-top:16px">Create my shop</button>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

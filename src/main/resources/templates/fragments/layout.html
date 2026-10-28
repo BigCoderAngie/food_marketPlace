@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:fragment="head(title)">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Eat.na'">Eat.na</title>
+    <meta name="description" content="Order home-cooked and local food in Windhoek. Pickup or delivery.">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍲</text></svg>">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+
+<header th:fragment="header" class="top">
+    <div class="wrap">
+        <a class="logo" th:href="@{/}">Eat<span>.na</span></a>
+        <nav>
+            <th:block th:if="${me == null or me.role.name() == 'CUSTOMER'}">
+                <a th:href="@{/search}" th:classappend="${currentPath == '/search'} ? 'active'">Find food</a>
+                <a th:href="@{/cart}" th:classappend="${currentPath == '/cart'} ? 'active'">Cart<span class="pill-count" th:if="${cartCount > 0}" th:text="${cartCount}">2</span></a>
+            </th:block>
+            <th:block th:if="${me != null}">
+                <a th:if="${me.role.name() == 'CUSTOMER'}" th:href="@{/orders}" th:classappend="${#strings.startsWith(currentPath, '/orders')} ? 'active'">My orders</a>
+                <a th:if="${me.role.name() == 'SELLER'}" th:href="@{/seller}" th:classappend="${#strings.startsWith(currentPath, '/seller')} ? 'active'">My shop</a>
+                <a th:if="${me.role.name() == 'ADMIN'}" th:href="@{/admin}" th:classappend="${#strings.startsWith(currentPath, '/admin')} ? 'active'">Admin</a>
+                <a th:href="@{/notifications}" title="Notifications">🔔<span class="pill-count" th:if="${unread > 0}" th:text="${unread}">1</span></a>
+                <form class="inline" th:action="@{/logout}" method="post"><button type="submit">Log out</button></form>
+            </th:block>
+            <th:block th:if="${me == null}">
+                <a th:href="@{/login}">Log in</a>
+                <a th:href="@{/register/seller}">Sell food</a>
+            </th:block>
+        </nav>
+    </div>
+</header>
+
+<th:block th:fragment="flash">
+    <div class="flash ok" th:if="${ok}" th:text="${ok}">Saved.</div>
+    <div class="flash error" th:if="${error}" th:text="${error}">Something went wrong.</div>
+</th:block>
+
+<footer th:fragment="footer" class="site">
+    <div class="wrap">
+        <p><strong>Eat.na</strong> connects you with home cooks, food stalls, bakeries and restaurants in Windhoek.
+            Sellers are verified before they appear. Sellers are responsible for food quality, preparation and allergens.</p>
+        <p class="small">Prices in Namibian dollars (N$). Payment is made to the seller; Eat.na does not hold your money.</p>
+    </div>
+</footer>
+
+<!-- Food card used in grids -->
+<a th:fragment="foodCard(f)" class="food" th:href="@{/food/{id}(id=${f.id})}">
+    <div class="thumb">
+        <img th:if="${f.photoPath}" th:src="${f.photoPath}" th:alt="${f.name}" loading="lazy">
+        <span th:unless="${f.photoPath}" th:text="${f.category != null and f.category.icon != null ? f.category.icon : '🍽️'}">🍲</span>
+    </div>
+    <div class="body">
+        <div class="name" th:text="${f.name}">Oshifima</div>
+        <div class="meta"><span th:text="${f.seller.name}">Seller</span> · <span th:text="${f.seller.suburb}">Katutura</span></div>
+        <div class="meta">
+            <span th:text="|Ready in ~${f.prepMinutes} min|">Ready in 15 min</span>
+            <th:block th:if="${f.seller.ratingAverage != null}"> · <span class="stars">★</span> <span th:text="${@fmt.rating(f.seller.ratingAverage)}">4.8</span></th:block>
+        </div>
+        <div class="foot">
+            <span class="price" th:text="${@fmt.money(f.price)}">N$ 55.00</span>
+            <th:block th:with="left=${f.portionsLeft(today)}">
+                <span th:if="${!f.isOrderable(today)}" class="badge red">Sold out</span>
+                <span th:if="${f.isOrderable(today) and left != null and left <= 5}" class="badge amber" th:text="|${left} left today|">3 left</span>
+                <span th:if="${f.isOrderable(today) and (left == null or left > 5)}" class="badge green">Available</span>
+            </th:block>
+        </div>
+    </div>
+</a>
+
+<!-- Order status badge -->
+<span th:fragment="statusBadge(s)" class="badge"
+      th:classappend="${s.name() == 'COMPLETED' or s.name() == 'READY' or s.name() == 'DELIVERED' or s.name() == 'PICKED_UP'} ? 'green' : (${s.isFailed() or s.name() == 'DELIVERY_PROBLEM'} ? 'red' : (${s.name() == 'ORDER_PLACED'} ? 'amber' : 'blue'))"
+      th:text="${s.label}">Status</span>
+
+<span th:fragment="payBadge(p)" class="badge"
+      th:classappend="${p.status.name() == 'PAID' or p.status.name() == 'REFUNDED'} ? 'green' : (${p.status.name() == 'REFUND_DUE'} ? 'red' : 'amber')"
+      th:text="${p.status.label}">Unpaid</span>
+
+<!-- Items, totals, fulfilment and history for an order; shared by customer, seller and admin views -->
+<th:block th:fragment="orderBody(order)">
+    <div class="card">
+        <h3>Items</h3>
+        <div class="table-wrap">
+            <table>
+                <tr th:each="i : ${order.items}">
+                    <td th:text="|${i.quantity} × ${i.name}|">2 × Oshifima</td>
+                    <td class="right nowrap" th:text="${@fmt.money(i.lineTotal)}">N$ 110.00</td>
+                </tr>
+            </table>
+            <table class="totals">
+                <tr><td>Subtotal</td><td class="right" th:text="${@fmt.money(order.subtotal)}"></td></tr>
+                <tr th:if="${order.fulfilment.name() == 'DELIVERY'}"><td th:text="|Delivery to ${order.deliverySuburb}|">Delivery</td><td class="right" th:text="${@fmt.money(order.deliveryFee)}"></td></tr>
+                <tr class="total"><td>Total</td><td class="right" th:text="${@fmt.money(order.total)}"></td></tr>
+            </table>
+        </div>
+        <p class="small muted" th:if="${order.customerNote}">Note: <span th:text="${order.customerNote}"></span></p>
+    </div>
+    <div class="card">
+        <h3>History</h3>
+        <ul class="timeline">
+            <li th:each="e : ${order.events}">
+                <strong th:text="${e.description}">Accepted</strong>
+                <div class="small muted"><span th:text="${@fmt.dateTime(e.at)}"></span> · <span th:text="${e.actor}"></span></div>
+            </li>
+        </ul>
+    </div>
+</th:block>
+
+<nav th:fragment="sellerNav" class="subnav">
+    <div class="wrap">
+        <a th:href="@{/seller}" th:classappend="${currentPath == '/seller'} ? 'active'">Dashboard</a>
+        <a th:href="@{/seller/orders}" th:classappend="${#strings.startsWith(currentPath, '/seller/orders')} ? 'active'">Orders</a>
+        <a th:href="@{/seller/menu}" th:classappend="${#strings.startsWith(currentPath, '/seller/menu')} ? 'active'">Menu &amp; portions</a>
+        <a th:href="@{/seller/profile}" th:classappend="${currentPath == '/seller/profile'} ? 'active'">Profile &amp; delivery</a>
+        <a th:href="@{/seller/reviews}" th:classappend="${currentPath == '/seller/reviews'} ? 'active'">Reviews</a>
+        <a th:href="@{/seller/reports}" th:classappend="${currentPath == '/seller/reports'} ? 'active'">Reports</a>
+    </div>
+</nav>
+
+<th:block th:fragment="sellerBanner(seller)">
+    <div class="flash warn" th:if="${seller.status.name() == 'PENDING_REVIEW'}">
+        <strong>Your shop is waiting for verification.</strong> Add your menu now. Customers will see it as soon as an admin verifies you.
+    </div>
+    <div class="flash error" th:if="${seller.status.name() == 'REJECTED'}">
+        <strong>Your application was not approved.</strong> <span th:text="${seller.statusNote}"></span>
+    </div>
+    <div class="flash info" th:if="${seller.paused}">
+        <strong>Your storefront is paused.</strong> Customers can see your shop but can't order.
+        <form class="inline" th:action="@{/seller/profile/pause}" method="post"><input type="hidden" name="paused" value="false"><button class="btn small" type="submit">Resume taking orders</button></form>
+    </div>
+</th:block>
+
+<nav th:fragment="adminNav" class="subnav">
+    <div class="wrap">
+        <a th:href="@{/admin}" th:classappend="${currentPath == '/admin'} ? 'active'">Dashboard</a>
+        <a th:href="@{/admin/sellers}" th:classappend="${currentPath == '/admin/sellers'} ? 'active'">Sellers</a>
+        <a th:href="@{/admin/orders}" th:classappend="${#strings.startsWith(currentPath, '/admin/orders')} ? 'active'">Orders</a>
+        <a th:href="@{/admin/reviews}" th:classappend="${currentPath == '/admin/reviews'} ? 'active'">Reviews</a>
+        <a th:href="@{/admin/categories}" th:classappend="${currentPath == '/admin/categories'} ? 'active'">Categories</a>
+        <a th:href="@{/admin/users}" th:classappend="${currentPath == '/admin/users'} ? 'active'">Users</a>
+        <a th:href="@{/admin/audit}" th:classappend="${currentPath == '/admin/audit'} ? 'active'">Audit &amp; notifications</a>
+    </div>
+</nav>
+</body>
+</html>

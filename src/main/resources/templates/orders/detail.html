@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head(|Order ${order.code}|)}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap" th:with="s=${order.status.name()}, pickup=${order.fulfilment.name() == 'PICKUP'}, p=${order.payment}"
+      th:data-autorefresh="${order.status.active ? 45 : null}">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <div class="flash ok" th:if="${param.placed}">Order placed! We've sent it to <span th:text="${order.seller.name}"></span>.</div>
+
+    <p class="muted small"><a th:href="@{/orders}">← My orders</a></p>
+    <h1 th:text="|Order ${order.code}|">Order EAT-XXXX</h1>
+    <p class="muted"><a th:href="@{/s/{slug}(slug=${order.seller.slug})}" th:text="${order.seller.name}"></a> · placed <span th:text="${@fmt.dateTime(order.placedAt)}"></span></p>
+
+    <!-- Status banner: what is happening and what happens next -->
+    <div class="status-banner wait" th:if="${s == 'ORDER_PLACED'}">
+        <h2 style="margin-top:0">Waiting for the seller to accept</h2>
+        <p>The seller has <span class="countdown" data-reload="1" th:data-deadline="${order.acceptBy.toEpochMilli()}">10:00</span> left to accept.
+            If they don't respond in time, the order is cancelled automatically and we'll suggest similar sellers nearby.</p>
+    </div>
+    <div class="status-banner info" th:if="${s == 'ACCEPTED' or s == 'PREPARING'}">
+        <h2 style="margin-top:0" th:text="${s == 'ACCEPTED'} ? 'Accepted' : 'Being prepared'">Accepted</h2>
+        <p th:if="${pickup}">Pickup at <strong th:text="${@fmt.dateTime(order.pickupTime)}"></strong>. The seller expects it ready around <strong th:text="${@fmt.time(order.readyEstimate)}"></strong>.</p>
+        <p th:unless="${pickup}">Expected ready around <strong th:text="${@fmt.time(order.readyEstimate)}"></strong>, then it's on its way to you.</p>
+    </div>
+    <div class="status-banner good" th:if="${s == 'READY'}">
+        <h2 style="margin-top:0" th:text="${pickup} ? 'Ready for pickup' : 'Ready, leaving soon'">Ready</h2>
+    </div>
+    <div class="status-banner info" th:if="${s == 'OUT_FOR_DELIVERY'}"><h2 style="margin-top:0">On its way</h2></div>
+    <div class="status-banner good" th:if="${s == 'PICKED_UP' or s == 'DELIVERED'}">
+        <h2 style="margin-top:0" th:text="${pickup} ? 'Collected' : 'Delivered'">Delivered</h2>
+        <p>Got your food? Confirm it so the seller is credited and you can leave a review.</p>
+        <form th:action="@{/orders/{c}/received(c=${order.code})}" method="post"><button class="btn green" type="submit">Yes, I received my food</button></form>
+    </div>
+    <div class="status-banner good" th:if="${s == 'COMPLETED'}"><h2 style="margin-top:0">Completed</h2><p>Thanks for ordering local.</p></div>
+    <div class="status-banner bad" th:if="${order.status.failed or s == 'DELIVERY_PROBLEM'}">
+        <h2 style="margin-top:0" th:text="${order.status.label}">Rejected</h2>
+        <p th:if="${order.reason}" th:text="${order.reason}"></p>
+        <p th:if="${s == 'DELIVERY_PROBLEM'}">The seller reported a delivery problem. Call them, or our admin team will follow up.</p>
+    </div>
+
+    <!-- Alternatives when the seller said no or didn't answer (SRS change #3) -->
+    <div class="card" th:if="${alternatives != null and !#lists.isEmpty(alternatives)}">
+        <h3>Try a similar seller nearby</h3>
+        <ul class="list">
+            <li th:each="a : ${alternatives}"><a class="seller-card" th:href="@{/s/{slug}(slug=${a.slug})}">
+                <div class="avatar" th:text="${a.initials}"></div>
+                <div><strong th:text="${a.name}"></strong><div class="small muted" th:text="|${a.type.label} · ${a.suburb}|"></div></div>
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="cols">
+        <div>
+            <th:block th:replace="~{fragments/layout :: orderBody(${order})}"></th:block>
+        </div>
+        <aside>
+            <div class="card">
+                <h3>Status</h3>
+                <p><span th:replace="~{fragments/layout :: statusBadge(${order.status})}"></span></p>
+                <h3 th:text="${pickup} ? 'Pickup' : 'Delivery'">Pickup</h3>
+                <th:block th:if="${pickup}">
+                    <p><strong th:text="${@fmt.dateTime(order.pickupTime)}"></strong></p>
+                    <p th:if="${s != 'ORDER_PLACED' and !order.status.failed}">
+                        <span th:text="|${order.seller.suburb}, ${order.seller.town}|"></span><br>
+                        <span class="small" th:text="${order.seller.pickupInstructions}"></span></p>
+                    <p class="small muted" th:if="${s == 'ORDER_PLACED'}">Directions appear once the seller accepts.</p>
+                </th:block>
+                <p th:unless="${pickup}"><span th:text="${order.deliverySuburb}"></span><br><span class="small" th:text="${order.deliveryLandmark}"></span></p>
+                <p class="small" th:if="${order.seller.phone != null and s != 'ORDER_PLACED'}">Seller: <a th:href="|tel:${order.seller.phone}|" th:text="${order.seller.phone}"></a></p>
+            </div>
+
+            <!-- Payment status is separate from order status (FR-PY-01) -->
+            <div class="card">
+                <h3>Payment</h3>
+                <p><span th:text="${p.method.label}"></span><br><span th:replace="~{fragments/layout :: payBadge(${p})}"></span></p>
+                <th:block th:if="${p.method.transfer and p.status.name() == 'UNPAID' and !order.status.failed}">
+                    <p class="small" th:if="${s == 'ORDER_PLACED'}">Wait for the seller to accept before you send money.</p>
+                    <th:block th:if="${s != 'ORDER_PLACED'}">
+                        <p class="small" th:if="${order.seller.paymentInstructions}" th:text="${order.seller.paymentInstructions}"></p>
+                        <p class="small">Send <strong th:text="${@fmt.money(order.total)}"></strong>, then tell the seller:</p>
+                        <form th:action="@{/orders/{c}/paid(c=${order.code})}" method="post">
+                            <label for="reference" style="margin-top:0">Payment reference (optional)</label>
+                            <input id="reference" name="reference" type="text" maxlength="80">
+                            <button class="btn block" type="submit" style="margin-top:8px">I've sent the money</button>
+                        </form>
+                    </th:block>
+                </th:block>
+                <p class="small" th:if="${p.status.name() == 'AWAITING_CONFIRMATION'}">Waiting for the seller to confirm the money arrived.</p>
+                <p class="small" th:if="${p.status.name() == 'REFUND_DUE'}">The seller needs to return your money. Contact them if it hasn't arrived.</p>
+            </div>
+
+            <div class="card" th:if="${s == 'ORDER_PLACED'}">
+                <details>
+                    <summary>Cancel this order</summary>
+                    <form th:action="@{/orders/{c}/cancel(c=${order.code})}" method="post">
+                        <label for="reason">Reason</label>
+                        <input id="reason" name="reason" type="text" required maxlength="300" placeholder="e.g. Ordered by mistake">
+                        <button class="btn danger block" type="submit" style="margin-top:8px">Cancel order</button>
+                    </form>
+                </details>
+            </div>
+
+            <!-- Reviews only for completed orders (FR-RV-03) -->
+            <div class="card" th:if="${canReview}">
+                <h3>Rate your food</h3>
+                <form th:action="@{/orders/{c}/review(c=${order.code})}" method="post">
+                    <div class="row">
+                        <label class="inline" th:each="n : ${#numbers.sequence(5, 1, -1)}"><input type="radio" name="rating" th:value="${n}" th:checked="${n == 5}" required> <span th:text="${n} + '★'"></span></label>
+                    </div>
+                    <label for="comment">Comment (optional)</label>
+                    <textarea id="comment" name="comment" maxlength="1000"></textarea>
+                    <button class="btn block" type="submit" style="margin-top:8px">Post review</button>
+                </form>
+            </div>
+            <div class="card" th:if="${review != null}">
+                <h3>Your review</h3>
+                <p><span class="stars" th:text="${@fmt.stars(review.rating)}"></span></p>
+                <p th:if="${review.comment}" th:text="${review.comment}"></p>
+            </div>
+        </aside>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

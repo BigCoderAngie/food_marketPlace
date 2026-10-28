@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Sellers')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main class="wrap">
+    <h1>Sellers</h1>
+    <div class="grid two">
+        <div class="card" th:each="s : ${sellers}">
+            <a class="seller-card" th:href="@{/s/{slug}(slug=${s.slug})}">
+                <div class="avatar" th:text="${s.initials}">MN</div>
+                <div>
+                    <strong th:text="${s.name}">Seller</strong> <span class="badge green">Verified</span>
+                    <div class="small muted"><span th:text="${s.type.label}"></span> · <span th:text="|${s.suburb}, ${s.town}|"></span></div>
+                    <div class="small"><span th:if="${s.offersPickup}">Pickup</span><span th:if="${s.offersPickup and s.offersDelivery}"> · </span><span th:if="${s.offersDelivery}">Delivery</span>
+                        <th:block th:if="${s.ratingAverage != null}"> · <span class="stars">★</span> <span th:text="${@fmt.rating(s.ratingAverage)}"></span></th:block></div>
+                </div>
+            </a>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

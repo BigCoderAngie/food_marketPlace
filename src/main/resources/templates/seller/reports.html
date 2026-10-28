@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Reports')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: sellerNav}"></nav>
+<main class="wrap">
+    <h1>Reports</h1>
+    <div class="chips" style="margin-bottom:12px">
+        <a class="chip" th:each="d : ${ {1, 7, 30, 90} }" th:classappend="${report.days() == d} ? 'active'" th:href="@{/seller/reports(days=${d})}"
+           th:text="${d == 1} ? 'Today' : |Last ${d} days|">7 days</a>
+    </div>
+    <div class="grid four">
+        <div class="stat"><div class="n" th:text="${report.orders()}"></div><div class="l">Orders</div></div>
+        <div class="stat"><div class="n" th:text="${report.completed()}"></div><div class="l">Completed</div></div>
+        <div class="stat"><div class="n" th:text="${@fmt.money(report.sales())}"></div><div class="l">Sales (completed, excl. delivery)</div></div>
+        <div class="stat"><div class="n" th:text="${report.rejected() + report.expired() + report.cancelled()}"></div>
+            <div class="l" th:text="|Rejected ${report.rejected()} · expired ${report.expired()} · cancelled ${report.cancelled()}|"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+        <h3>Most ordered</h3>
+        <p class="muted" th:if="${#lists.isEmpty(report.popular())}">No orders in this period.</p>
+        <table th:unless="${#lists.isEmpty(report.popular())}">
+            <tr th:each="e : ${report.popular()}"><td th:text="${e.key}"></td><td class="right" th:text="|${e.value} sold|"></td></tr>
+        </table>
+    </div>
+    <p class="small muted" th:if="${report.expired() > 0}">Tip: expired orders mean customers waited and nobody accepted. Pause your shop when you're busy, or raise your accept time in Profile.</p>
+</main>
+</body>
+</html>

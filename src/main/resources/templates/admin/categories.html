@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Categories')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap" style="max-width:720px">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Categories</h1>
+    <div class="card">
+        <ul class="list">
+            <li th:each="c : ${categories}" class="row" style="justify-content:space-between">
+                <span><span th:text="${c.icon}"></span> <strong th:text="${c.name}"></strong> <span class="badge" th:unless="${c.active}">Disabled</span></span>
+                <form th:action="@{/admin/categories/{id}/toggle(id=${c.id})}" method="post">
+                    <button class="btn secondary small" type="submit" th:text="${c.active} ? 'Disable' : 'Enable'"></button></form>
+            </li>
+        </ul>
+    </div>
+    <form class="card row fill" th:action="@{/admin/categories}" method="post" style="align-items:flex-end">
+        <div><label for="name">New category</label><input id="name" name="name" type="text" required></div>
+        <div style="flex:0 0 90px"><label for="icon">Emoji</label><input id="icon" name="icon" type="text" maxlength="8"></div>
+        <div style="flex:0 0 auto"><button class="btn" type="submit">Add</button></div>
+    </form>
+</main>
+</body>
+</html>

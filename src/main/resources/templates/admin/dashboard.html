@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Admin')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: adminNav}"></nav>
+<main class="wrap">
+    <th:block th:replace="~{fragments/layout :: flash}"></th:block>
+    <h1>Platform activity</h1>
+    <div class="grid four">
+        <div class="stat"><div class="n" th:text="${stats.ordersToday()}"></div><div class="l">Orders today</div></div>
+        <div class="stat"><div class="n" th:text="${stats.customers()}"></div><div class="l">Customers</div></div>
+        <div class="stat"><div class="n" th:text="${stats.sellersVerified()}"></div><div class="l">Verified sellers</div></div>
+        <div class="stat"><div class="n" th:text="${stats.sellersPending()}"></div><div class="l">Waiting for verification</div></div>
+    </div>
+
+    <h2>Sellers to verify</h2>
+    <div class="card" th:if="${#lists.isEmpty(pending)}"><p class="muted" style="margin:0">No applications waiting.</p></div>
+    <div class="card" th:each="s : ${pending}">
+        <strong th:text="${s.name}"></strong> <span class="badge amber">Waiting</span>
+        <div class="small muted" th:text="|${s.type.label} · ${s.suburb}, ${s.town} · ${s.owner.name} · ${s.owner.contact} · applied ${@fmt.ago(s.createdAt)}|"></div>
+        <p class="small" th:text="${s.description}"></p>
+        <a class="btn small" th:href="@{/admin/sellers}">Review in Sellers</a>
+    </div>
+
+    <h2>Delivery problems</h2>
+    <div class="card" th:if="${#lists.isEmpty(problems)}"><p class="muted" style="margin:0">None open.</p></div>
+    <div class="card" th:unless="${#lists.isEmpty(problems)}">
+        <ul class="list"><li th:each="o : ${problems}"><a th:href="@{/admin/orders/{c}(c=${o.code})}" th:text="|${o.code} · ${o.seller.name} · ${o.reason}|"></a></li></ul>
+    </div>
+
+    <h2>All orders by status</h2>
+    <div class="card table-wrap">
+        <table>
+            <tr th:each="st : ${statuses}" th:if="${stats.ordersByStatus().containsKey(st)}">
+                <td><span th:replace="~{fragments/layout :: statusBadge(${st})}"></span></td>
+                <td class="right" th:text="${stats.ordersByStatus().get(st)}"></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>
