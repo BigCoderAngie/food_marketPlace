@@ -134,7 +134,7 @@ form.inline { display: inline; }
 .hero h1 { font-size: 1.6rem; }
 .hero p { opacity: .92; }
 .searchbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.searchbar input, .searchbar select { flex: 1 1 180px; border: 0; }
+.searchbar input, .searchbar select { flex: 1 1 180px; border: 0; color: var(--ink); }
 .searchbar .btn { background: #1c1917; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .chip { flex: none; text-decoration: none; color: var(--ink); background: var(--card); border: 1px solid var(--line); padding: 8px 12px; border-radius: 999px; font-size: .92rem; }
